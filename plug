@@ -1,0 +1,123 @@
+#!/bin/python3
+# "PlacehoLder Un- and Generator"
+
+import sys
+import re
+
+def usage():
+	print(
+'''{0} <options>
+	-d <name> <value>   : define placeholder
+	-u <placeholder>    : ungenerate palceholder (collapse)
+	-g <placeholder>    : generate placeholder (expand)
+	-f <file>           : specify I/O file
+	-h                  : print help and exit
+  Options are evaluated in the order they are found and can be repeated.
+  If multiple files are specified, actions apply to all of them.
+  \"@all\" is a special pseudo palceholder with the meaning \'every palce holder\'.
+  NOTE: do not forget to specify your file before the desired actions.'''.format(sys.argv[0]))
+
+
+placeholders = {}
+placeholder = '#placeholder<{0}>'
+phl_col = placeholder + ' COLLAPSED'
+phl_exp_beg = placeholder + ' BEGIN'
+phl_exp_end = placeholder + ' END'
+re_phl_col = re.compile('''^(.*){0}.*'''.format(phl_col.format('''(\w+)''')), re.M)
+re_phl_exp_beg = re.compile('''^(.*){0}.*'''.format(phl_exp_beg.format('''(\w+)''')), re.M)
+re_phl_exp_end = re.compile('''^.*{0}.*'''.format(phl_exp_end.format('''(\w+)''')), re.M)
+
+
+def gen(s, phl):
+	ret = ''
+	l = 0
+	is_all = (phl == '@all')
+
+	for m in re_phl_col.finditer(s):
+		if((not is_all) and m.group(2) != phl):
+			continue
+		ret += s[l : m.start(0)]
+		ret += m.group(1) + phl_exp_beg.format(phl) + '\n'
+		ret += placeholders[phl]
+		ret += '\n' + m.group(1) + phl_exp_end.format(phl)
+		l = m.end(0)
+	ret += s[l:]
+	return ret
+
+def ungen(s, phl):
+	ret = ''
+	l = 0
+	is_all = (phl == '@all')
+	for m in re_phl_exp_beg.finditer(s):
+		if((not is_all) and m.group(2) != phl):
+			continue
+		ret += s[l : m.start(0)]
+		ret += m.group(1) + phl_col.format(phl)
+		l = m.end(0)
+		for me in re_phl_exp_end.finditer(s[m.end(0):]):
+			if(me.group(1) != phl):
+				continue
+			l = m.end(0) + me.end(0)
+			break
+	ret += s[l:]
+	return ret
+
+def get_param(argv, i, opt):
+	try:
+		param = argv[i]
+	except:
+		print('Missing parameter to flag \'{0}\'.'.format(opt))
+		exit(2)
+	return param
+
+def plug(argv):
+	sfiles = []
+	i = -1
+	while i < len(argv)-1:
+		i = i + 1
+
+		# 0 param opt
+		if argv[i] == '-h':
+			usage()
+			exit(0)
+
+		# 2 param opt
+		if argv[i] == '-d':
+			try:
+				placeholders[argv[i+1]] = argv[i+2]
+				i = i + 2
+			except:
+				print('Unterminated definition (-d).')
+				exit(3)
+			continue
+
+		# 1 param opt
+		i = i + 1
+		if argv[i-1] == '-u':
+			for sf in sfiles:
+				with open(sf, 'r') as f:
+					s = ungen(f.read(), get_param(argv, i, '-u'))
+				with open(sf, 'w') as f:
+					f.write(s)
+			continue
+
+		if argv[i-1] == '-g':
+			for sf in sfiles:
+				with open(sf, 'r') as f:
+					s = gen(f.read(), get_param(argv, i, '-g'))
+				with open(sf, 'w') as f:
+					f.write(s)
+			continue
+		
+		if argv[i-1] == '-f':
+			sfiles.append(get_param(argv, i, '-f'))
+			continue
+
+		print("Unrecognized flag '{0}'.".format(argv[i]))
+		usage()
+		exit(1)
+	return 0
+	
+
+if __name__ == '__main__':
+	raise SystemExit(plug(sys.argv[1:]))
