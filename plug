@@ -118,7 +118,7 @@ def plug(argv):
 			sfiles.append(get_param(argv, i, '-f'))
 			continue
 
-		print("Unrecognized flag '{0}'.".format(argv[i]))
+		print("Unrecognized flag '{0}'.".format(argv[i-1]))
 		usage()
 		exit(1)
 	return 0
