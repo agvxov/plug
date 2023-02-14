@@ -15,7 +15,13 @@ def usage():
   Options are evaluated in the order they are found and can be repeated.
   If multiple files are specified, actions apply to all of them.
   \"@all\" is a special pseudo-placeholder with the meaning \'every placeholder\'.
-  NOTE: do not forget to specify your file before the desired actions.'''.format(sys.argv[0]))
+  NOTE: do not forget to specify your file before the desired actions.
+
+  Placeholder syntax:
+	#placeholder<<name>> COLLAPSED
+	NOTE: text located before the placeholder on the same line is preserved copied,
+	 allowing for commenting it
+  '''.format(sys.argv[0]))
 
 
 placeholders = {}
