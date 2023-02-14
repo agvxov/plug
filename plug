@@ -100,10 +100,13 @@ def plug(argv):
 		i = i + 1
 		if argv[i-1] == '-u':
 			for sf in sfiles:
-				with open(sf, 'r') as f:
-					s = ungen(f.read(), get_param(argv, i, '-u'))
-				with open(sf, 'w') as f:
-					f.write(s)
+				try:
+					with open(sf, 'r') as f:
+						s = ungen(f.read(), get_param(argv, i, '-u'))
+					with open(sf, 'w') as f:
+						f.write(s)
+				except:
+					print("I/O error encountered while interacting with '{0}'.".format(sf))
 			continue
 
 		if argv[i-1] == '-g':
