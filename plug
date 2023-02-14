@@ -8,13 +8,13 @@ def usage():
 	print(
 '''{0} <options>
 	-d <name> <value>   : define placeholder
-	-u <placeholder>    : ungenerate palceholder (collapse)
-	-g <placeholder>    : generate placeholder (expand)
+	-u <placeholder>    : ungenerate placeholder (ie. collapse)
+	-g <placeholder>    : generate placeholder (ie. expand)
 	-f <file>           : specify I/O file
 	-h                  : print help and exit
   Options are evaluated in the order they are found and can be repeated.
   If multiple files are specified, actions apply to all of them.
-  \"@all\" is a special pseudo palceholder with the meaning \'every palce holder\'.
+  \"@all\" is a special pseudo-placeholder with the meaning \'every placeholder\'.
   NOTE: do not forget to specify your file before the desired actions.'''.format(sys.argv[0]))
 
 
