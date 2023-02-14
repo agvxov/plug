@@ -20,8 +20,7 @@ def usage():
   Placeholder syntax:
 	#placeholder<<name>> COLLAPSED
 	NOTE: text located before the placeholder on the same line is preserved copied,
-	 allowing for commenting it
-  '''.format(sys.argv[0]))
+	 allowing for commenting it'''.format(sys.argv[0]))
 
 
 placeholders = {}
