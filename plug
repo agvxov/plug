@@ -33,7 +33,8 @@ def usage():
     #placeholder<hw> BEGIN
     hello world
     #placeholder<hw> END
-    some more original text'''.format(sys.argv[0]))
+    some more original text
+'''.format(sys.argv[0]), end='')
 
 
 
