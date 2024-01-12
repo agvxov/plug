@@ -19,16 +19,32 @@ def usage():
 
   Placeholder syntax:
 	#placeholder<<name>> COLLAPSED
-	NOTE: text located before the placeholder on the same line is preserved copied,
-	 allowing for commenting it'''.format(sys.argv[0]))
+	NOTE: text located before the placeholder on the same line is preserved,
+	 allowing for commenting it out
+
+  Example:
+    $ cat ex1.txt
+    original text
+    #placeholder<hw> COLLAPSED
+    some more original text
+    $ plug -f ex1.txt -d hw 'hello world' -g hw
+    $ cat ex1.txt
+    original text
+    #placeholder<hw> BEGIN
+    hello world
+    #placeholder<hw> END
+    some more original text'''.format(sys.argv[0]))
+
 
 
 placeholders = {}
-placeholder = '#placeholder<{0}>'
-phl_col = placeholder + ' COLLAPSED'
+placeholder  = '#placeholder<{0}>'
+
+phl_col     = placeholder + ' COLLAPSED'
 phl_exp_beg = placeholder + ' BEGIN'
 phl_exp_end = placeholder + ' END'
-re_phl_col = re.compile('''^(.*){0}.*'''.format(phl_col.format('''(\w+)''')), re.M)
+
+re_phl_col     = re.compile('''^(.*){0}.*'''.format(phl_col.format('''(\w+)''')), re.M)
 re_phl_exp_beg = re.compile('''^(.*){0}.*'''.format(phl_exp_beg.format('''(\w+)''')), re.M)
 re_phl_exp_end = re.compile('''^.*{0}.*'''.format(phl_exp_end.format('''(\w+)''')), re.M)
 
