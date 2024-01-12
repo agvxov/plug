@@ -7,11 +7,11 @@ import re
 def usage():
 	print(
 '''{0} <options>
-	-d <name> <value>   : define placeholder
-	-u <placeholder>    : ungenerate placeholder (ie. collapse)
-	-g <placeholder>    : generate placeholder (ie. expand)
-	-f <file>           : specify I/O file
-	-h                  : print help and exit
+	-d <name> <value>         : define placeholder
+	-u <placeholder>          : ungenerate placeholder (ie. collapse)
+	-g <placeholder>          : generate placeholder (ie. expand)
+	-f <file>                 : specify I/O file
+	-h                        : print help and exit
   Options are evaluated in the order they are found and can be repeated.
   If multiple files are specified, actions apply to all of them.
   \"@all\" is a special pseudo-placeholder with the meaning \'every placeholder\'.
@@ -23,17 +23,17 @@ def usage():
 	 allowing for commenting it out
 
   Example:
-    $ cat ex1.txt
-    original text
-    #placeholder<hw> COLLAPSED
-    some more original text
-    $ plug -f ex1.txt -d hw 'hello world' -g hw
-    $ cat ex1.txt
-    original text
-    #placeholder<hw> BEGIN
-    hello world
-    #placeholder<hw> END
-    some more original text
+	$ cat ex1.txt
+	original text
+	#placeholder<hw> COLLAPSED
+	some more original text
+	$ plug -f ex1.txt -d hw 'hello world' -g hw
+	$ cat ex1.txt
+	original text
+	#placeholder<hw> BEGIN
+	hello world
+	#placeholder<hw> END
+	some more original text
 '''.format(sys.argv[0]), end='')
 
 
