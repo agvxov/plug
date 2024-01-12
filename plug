@@ -82,7 +82,7 @@ def plug(argv):
 		i = i + 1
 
 		# 0 param opt
-		if argv[i] == '-h':
+		if argv[i] == '-h' or argv[i] == '--help':
 			usage()
 			exit(0)
 
