@@ -49,14 +49,16 @@ class Error(Enum):
 
 def usage():
 	print(
-'''{GREEN}{BOLD}{argv0}{NORMAL} {BLUE}{BOLD}<options>{NORMAL}
+'''{GREEN}{BOLD}{argv0}{NORMAL} {BOLD}{YELLOW}({BLUE}<option>{YELLOW}|{BLUE}<file>{YELLOW})+{NORMAL}
+  {YELLOW}Position insensitive options:{NORMAL}
+	{GREEN}{BOLD}-h{NORMAL} {BLUE}{BOLD}{NORMAL}                       : print help and exit
+	{GREEN}{BOLD}--color{NORMAL} {BOLD}{BLUE}never{YELLOW}|{BLUE}auto{YELLOW}|{BLUE}always{NORMAL} : set output coloring option; default: auto
+  {YELLOW}Position sensitive options:{NORMAL}
 	{GREEN}{BOLD}-d{NORMAL} {BLUE}{BOLD}<name> <value>{NORMAL}         : define placeholder
 	{GREEN}{BOLD}-e{NORMAL} {BLUE}{BOLD}<name> <file>{NORMAL}          : define placeholder as the contents of <file>
 	{GREEN}{BOLD}-u{NORMAL} {BLUE}{BOLD}<placeholder>{NORMAL}          : ungenerate placeholder (ie. collapse)
 	{GREEN}{BOLD}-g{NORMAL} {BLUE}{BOLD}<placeholder>{NORMAL}          : generate placeholder (ie. expand)
-	{GREEN}{BOLD}-f{NORMAL} {BLUE}{BOLD}<file>{NORMAL}                 : specify I/O file
-	{GREEN}{BOLD}-h{NORMAL} {BLUE}{BOLD}{NORMAL}                       : print help and exit
-	{GREEN}{BOLD}--color{NORMAL} {BOLD}{BLUE}never{YELLOW}|{BLUE}auto{YELLOW}|{BLUE}always{NORMAL} : set output coloring option; default: auto
+  Every argument not starting with '-' is considered a file.
   Options are evaluated in the order they are found and can be repeated.
   If multiple files are specified, actions apply to all of them.
   {MAGENTA}{REVERSE}NOTE:{NORMAL} do not forget to specify your file before the desired actions.
@@ -178,14 +180,29 @@ def plug(argv : [str]) -> int:
 		def_colors()
 
 	sfiles = []
+
 	i = -1
 	while i < len(argv)-1:
-		i = i + 1
-
-		# 0 param opt
 		if argv[i] == '-h' or argv[i] == '--help':
 			usage()
 			exit(0)
+		i = i + 1
+		if argv[i-1] == '--color':
+			p = get_param(argv, i)
+			if p == 'always':
+				def_colors()
+			elif p == 'auto':
+				if has_color:
+					def_colors()
+			elif p == 'never':
+				undef_colors()
+			else:
+				error_and_quit(Error.UNK_OPT, ['--color', p])
+			continue
+
+	i = -1
+	while i < len(argv)-1:
+		i = i + 1
 
 		# 2 param opt
 		if argv[i] == '-d':
@@ -207,18 +224,6 @@ def plug(argv : [str]) -> int:
 
 		# 1 param opt
 		i = i + 1
-		if argv[i-1] == '--color':
-			p = get_param(argv, i)
-			if p == 'always':
-				def_colors()
-			elif p == 'auto':
-				if has_color:
-					def_colors()
-			elif p == 'never':
-				undef_colors()
-			else:
-				error_and_quit(Error.UNK_OPT, ['--color', p])
-			continue
 
 		if argv[i-1] == '-u':
 			for sf in sfiles:
@@ -239,7 +244,7 @@ def plug(argv : [str]) -> int:
 					f.write(s)
 			continue
 		
-		if argv[i-1] == '-f':
+		if argv[i-1][0] != '-':
 			sfiles.append(get_param(argv, i))
 			continue
 
