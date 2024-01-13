@@ -1,6 +1,6 @@
 # Plug
 
-> PLUG - PlacehoLder Un- and Generator; for inplace metaprogramming or easy payload embeding
+> PLUG - PlacehoLder Un- and Generator; for in place metaprogramming or easy payload embedding
 
 A complementary tool for traditional preprocessors to avoid adding a redundant step of translation to every update.
 
@@ -14,17 +14,17 @@ Think preprocessors.
 Only the most well adapted preprocessors have the privilage to have inplace operation support,
 as the standard C preprocessor does.
 However if one wishes to do something more hacky,
-perhaps with the m4 preproccessor,
+perhaps with the m4 preprocessor,
 one would end up with `mysource.extension.m4`.
 Which would be annoying to edit for multiple reasons:
 + getting the right highlighting is most likely painful to setup
 + a new intermediate file (mysource.extension) is introduced, which could be edited by accident
 + in case of large files, the reason/extend of using m4 becomes obfuscated by the dominating original format
 
-#### Emeding
-Say you wish to make a shell script selfcontained,
+#### Embedding
+Say you wish to make a shell script self-contained,
 but it relies on an external file.
-It sounds self-condradicory,
+It sounds self-contradictory,
 however it could come up when,
 say one of the tools involved need large amounts of binary data.
 
