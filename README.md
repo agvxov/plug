@@ -33,3 +33,7 @@ Imagine an installer for example that must unpack a tar.
 Before you wonder if I had made this twisted hack up, I can prove the contrary:
 
 https://www.xmodulo.com/embed-binary-file-bash-script.html
+
+### TODO
++ fill in "in practice"
++ @all is broken, it ruins everything and not internally defined as a builtin
