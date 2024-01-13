@@ -4,7 +4,7 @@ echo start
 
 #placeholder<@gnu-tofile-payload> COLLAPSED
 
-echo start
+echo end
 
 exit
 
