@@ -3,6 +3,7 @@
 
 import sys
 import re
+from enum import Enum, auto
 
 BLUE    = ''
 YELLOW  = ''
@@ -38,6 +39,13 @@ def undef_colors():
 	NORMAL  = ''
 	MAGENTA = ''
 	REVERSE = ''
+
+class Error(Enum):
+	PARAM_MISS = auto()
+	UNK_FLAG   = auto()
+	IO         = auto()
+	UNK_OPT    = auto()
+	UNTERM_DEF = auto()
 
 def usage():
 	print(
@@ -149,9 +157,21 @@ def get_param(argv : [str], i : int) -> str:
 	try:
 		param = argv[i]
 	except:
-		print('Missing parameter to flag \'{0}\'.'.format(argv[i-1]))
-		exit(2)
+		error_and_quit(Error.PARAM_MISS, [argv[i-1]])
 	return param
+
+def error_and_quit(e : int, argv : [str]) -> None:
+	msg = {
+		Error.PARAM_MISS : "Missing parameter to flag '{0}'.",
+		Error.UNK_FLAG   : "Unrecognized flag '{0}'.",
+		Error.UNK_OPT    : "Unknown option passed to {0}: '{1}'.",
+		Error.IO         : "I/O error encountered while interacting with '{0}'.",
+		Error.UNTERM_DEF : "Unterminated definition ({0}).",
+	}
+	print("{RED}".format(**globals()), end='')
+	print(msg[e].format(*argv, **globals()), end='')
+	print("{NORMAL}".format(**globals()))
+	exit(e.value)
 
 def plug(argv : [str]) -> int:
 	if has_color:
@@ -173,8 +193,16 @@ def plug(argv : [str]) -> int:
 				placeholders[argv[i+1]] = argv[i+2]
 				i = i + 2
 			except:
-				print('Unterminated definition (-d).')
-				exit(3)
+				error_and_quit(Error.UNTERM_DEF, ['-d'])
+			continue
+
+		if argv[i] == '-e':
+			try:
+				with open(argv[i+2], 'r') as f:
+					placeholders[argv[i+1]] = f.read()
+				i = i + 2
+			except:
+				error_and_quit(Error.UNTERM_DEF, ['-e'])
 			continue
 
 		# 1 param opt
@@ -189,7 +217,7 @@ def plug(argv : [str]) -> int:
 			elif p == 'never':
 				undef_colors()
 			else:
-				print("Unknown option passed to --color: '{0}'.".format(p))
+				error_and_quit(Error.UNK_OPT, ['--color', p])
 			continue
 
 		if argv[i-1] == '-u':
@@ -200,7 +228,7 @@ def plug(argv : [str]) -> int:
 					with open(sf, 'w') as f:
 						f.write(s)
 				except:
-					print("I/O error encountered while interacting with '{0}'.".format(sf))
+					error_and_quit(Error.IO, [sf])
 			continue
 
 		if argv[i-1] == '-g':
@@ -215,9 +243,7 @@ def plug(argv : [str]) -> int:
 			sfiles.append(get_param(argv, i))
 			continue
 
-		print("Unrecognized flag '{0}'.".format(argv[i-1]))
-		usage()
-		exit(1)
+		error_and_quit(Error.UNK_FLAG, [argv[i-1]])
 	return 0
 	
 
