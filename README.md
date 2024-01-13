@@ -31,4 +31,5 @@ say one of the tools involved need large amounts of binary data.
 Imagine an installer for example that must unpack a tar.
 
 Before you wonder if I had made this twisted hack up, I can prove the contrary:
+
 https://www.xmodulo.com/embed-binary-file-bash-script.html
