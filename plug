@@ -1,47 +1,82 @@
-#!/bin/python3
+#!/usr/bin/python3
 # "PlacehoLder Un- and Generator"
 
 import sys
 import re
 
+BLUE    = ''
+YELLOW  = ''
+GREEN   = ''
+RED     = ''
+BOLD    = ''
+NORMAL  = ''
+MAGENTA = ''
+REVERSE = ''
+
+def has_color():
+	import os
+	return "color" in os.environ.get('TERM')
+
+def def_colors():
+	global BLUE, YELLOW, GREEN, RED, BOLD, NORMAL, MAGENTA, REVERSE
+	BLUE    = '\033[34m'
+	YELLOW  = '\033[33m'
+	GREEN   = '\033[32m'
+	RED     = '\033[31m'
+	BOLD    = '\033[1m'
+	NORMAL  = '\033[0m'
+	MAGENTA = '\033[35m'
+	REVERSE = '\033[7m'
+
+def undef_colors():
+	global BLUE, YELLOW, GREEN, RED, BOLD, NORMAL, MAGENTA, REVERSE
+	BLUE    = ''
+	YELLOW  = ''
+	GREEN   = ''
+	RED     = ''
+	BOLD    = ''
+	NORMAL  = ''
+	MAGENTA = ''
+	REVERSE = ''
+
 def usage():
 	print(
-'''{0} <options>
-	-d <name> <value>		 : define placeholder
-	-e <name> <file>		  : define placeholder as the contents of <file>
-	-u <placeholder>		  : ungenerate placeholder (ie. collapse)
-	-g <placeholder>		  : generate placeholder (ie. expand)
-	-f <file>				 : specify I/O file
-	-h						: print help and exit
-	--color never|auto|always : set output coloring option; default: auto
+'''{GREEN}{BOLD}{argv0}{NORMAL} {BLUE}{BOLD}<options>{NORMAL}
+	{GREEN}{BOLD}-d{NORMAL} {BLUE}{BOLD}<name> <value>{NORMAL}         : define placeholder
+	{GREEN}{BOLD}-e{NORMAL} {BLUE}{BOLD}<name> <file>{NORMAL}          : define placeholder as the contents of <file>
+	{GREEN}{BOLD}-u{NORMAL} {BLUE}{BOLD}<placeholder>{NORMAL}          : ungenerate placeholder (ie. collapse)
+	{GREEN}{BOLD}-g{NORMAL} {BLUE}{BOLD}<placeholder>{NORMAL}          : generate placeholder (ie. expand)
+	{GREEN}{BOLD}-f{NORMAL} {BLUE}{BOLD}<file>{NORMAL}                 : specify I/O file
+	{GREEN}{BOLD}-h{NORMAL} {BLUE}{BOLD}{NORMAL}                       : print help and exit
+	{GREEN}{BOLD}--color{NORMAL} {BOLD}{BLUE}never{YELLOW}|{BLUE}auto{YELLOW}|{BLUE}always{NORMAL} : set output coloring option; default: auto
   Options are evaluated in the order they are found and can be repeated.
   If multiple files are specified, actions apply to all of them.
-  \"@all\" is a special pseudo-placeholder with the meaning \'every placeholder\'.
-  NOTE: do not forget to specify your file before the desired actions.
+  {MAGENTA}{REVERSE}NOTE:{NORMAL} do not forget to specify your file before the desired actions.
 
-  Placeholder syntax:
+  {YELLOW}{BOLD}Placeholder syntax:{NORMAL}
 	#placeholder<<name>> COLLAPSED
-	NOTE: text located before the placeholder on the same line is preserved,
+	{MAGENTA}{REVERSE}NOTE:{NORMAL} text located before the placeholder on the same line is preserved,
 	 allowing for commenting it out
-	Builtins:
+	{YELLOW}Builtins:{NORMAL}
 	  Builtin placeholder names must start with '@', these names are reserved.
 	  Every Plug implementation is free to define it's own builtins.
-	  This Plug implmentation defines the following builtins:
-		@gnu-tofile-*
+	  This Plug implementation defines the following builtins:
+		{BLUE}@all{NORMAL}
+		{BLUE}@gnu-tofile-*{NORMAL}
 
-  Example:
-	$ cat ex1.txt
+  {YELLOW}{BOLD}Example:{NORMAL}
+	{GREEN}$ cat ex1.txt{NORMAL}
 	original text
 	#placeholder<hw> COLLAPSED
 	some more original text
-	$ plug -f ex1.txt -d hw 'hello world' -g hw
-	$ cat ex1.txt
+	{GREEN}$ plug -f ex1.txt -d hw 'hello world' -g hw{NORMAL}
+	{GREEN}$ cat ex1.txt{NORMAL}
 	original text
 	#placeholder<hw> BEGIN
 	hello world
 	#placeholder<hw> END
 	some more original text
-'''.format(sys.argv[0]), end='')
+'''.format(**globals(), argv0 = sys.argv[0]), end='')
 
 
 
@@ -119,6 +154,9 @@ def get_param(argv : [str], i : int) -> str:
 	return param
 
 def plug(argv : [str]) -> int:
+	if has_color:
+		def_colors()
+
 	sfiles = []
 	i = -1
 	while i < len(argv)-1:
@@ -141,6 +179,19 @@ def plug(argv : [str]) -> int:
 
 		# 1 param opt
 		i = i + 1
+		if argv[i-1] == '--color':
+			p = get_param(argv, i)
+			if p == 'always':
+				def_colors()
+			elif p == 'auto':
+				if has_color:
+					def_colors()
+			elif p == 'never':
+				undef_colors()
+			else:
+				print("Unknown option passed to --color: '{0}'.".format(p))
+			continue
+
 		if argv[i-1] == '-u':
 			for sf in sfiles:
 				try:
