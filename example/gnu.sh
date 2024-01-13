@@ -2,7 +2,7 @@
 
 echo start
 
-#placeholder<@gnu-tofile-payload>
+#placeholder<@gnu-tofile-payload> COLLAPSED
 
 echo start
 

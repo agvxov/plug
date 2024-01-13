@@ -1,0 +1,5 @@
+original text
+#placeholder<hw> BEGIN
+hello world
+#placeholder<hw> END
+some more original text
