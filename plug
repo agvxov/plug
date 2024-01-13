@@ -7,11 +7,13 @@ import re
 def usage():
 	print(
 '''{0} <options>
-	-d <name> <value>         : define placeholder
-	-u <placeholder>          : ungenerate placeholder (ie. collapse)
-	-g <placeholder>          : generate placeholder (ie. expand)
-	-f <file>                 : specify I/O file
-	-h                        : print help and exit
+	-d <name> <value>		 : define placeholder
+	-e <name> <file>		  : define placeholder as the contents of <file>
+	-u <placeholder>		  : ungenerate placeholder (ie. collapse)
+	-g <placeholder>		  : generate placeholder (ie. expand)
+	-f <file>				 : specify I/O file
+	-h						: print help and exit
+	--color never|auto|always : set output coloring option; default: auto
   Options are evaluated in the order they are found and can be repeated.
   If multiple files are specified, actions apply to all of them.
   \"@all\" is a special pseudo-placeholder with the meaning \'every placeholder\'.
@@ -21,6 +23,11 @@ def usage():
 	#placeholder<<name>> COLLAPSED
 	NOTE: text located before the placeholder on the same line is preserved,
 	 allowing for commenting it out
+	Builtins:
+	  Builtin placeholder names must start with '@', these names are reserved.
+	  Every Plug implementation is free to define it's own builtins.
+	  This Plug implmentation defines the following builtins:
+		@gnu-tofile-*
 
   Example:
 	$ cat ex1.txt
@@ -39,44 +46,63 @@ def usage():
 
 
 placeholders = {}
-placeholder  = '#placeholder<{0}>'
 
-phl_col     = placeholder + ' COLLAPSED'
-phl_exp_beg = placeholder + ' BEGIN'
-phl_exp_end = placeholder + ' END'
+placeholder = '#placeholder<{0}>'
+placeholder_collapsed  = placeholder + ' COLLAPSED'
+placeholder_expanded_beginning = placeholder + ' BEGIN'
+placeholder_expanded_ending	= placeholder + ' END'
+del placeholder
 
-re_phl_col     = re.compile('''^(.*){0}.*'''.format(phl_col.format('''(\w+)''')), re.M)
-re_phl_exp_beg = re.compile('''^(.*){0}.*'''.format(phl_exp_beg.format('''(\w+)''')), re.M)
-re_phl_exp_end = re.compile('''^.*{0}.*'''.format(phl_exp_end.format('''(\w+)''')), re.M)
+re_placeholder_collapsed          = re.compile('''^(.*){0}.*'''.format(placeholder_collapsed.format('''([a-zA-Z0-9_@-]+)''')), re.M)
+re_placeholder_expanded_beginning = re.compile('''^(.*){0}.*'''.format(placeholder_expanded_beginning.format('''([a-zA-Z0-9_@-]+)''')), re.M)
+re_placeholder_expanded_ending    = re.compile('''^.*{0}.*'''.format(placeholder_expanded_ending.format('''([a-zA-Z0-9_@-]+)''')), re.M)
 
 
-def gen(s, phl):
+builtins = [
+	('''@gnu-tofile-(.*)''',
+'''payload_data=$(sed -n '/#placeholder<payload> START$/,/#placeholder<payload> END$/p' "$(realpath $0)")
+payload_data=$(echo "$payload_data" | grep -vE '#placeholder<payload> (START|END)')
+[ -z "$PAYLOADOUT" ] && PAYLOADOUT="out"
+echo "$payload_data" > "$PAYLOADOUT"'''
+),
+]
+
+def builtin_lookup(phl : str) -> str:
+	for i in builtins:
+		regex, value = i
+		m = re.compile(regex).match(phl)
+		if m:
+			value = value.format(m.groups()[1:])
+			return value
+	return ''
+
+def gen(s : str, phl : str) -> str:
 	ret = ''
 	l = 0
 	is_all = (phl == '@all')
 
-	for m in re_phl_col.finditer(s):
-		if((not is_all) and m.group(2) != phl):
+	for m in re_placeholder_collapsed.finditer(s):
+		if (not is_all) and (m.group(2) != phl):
 			continue
 		ret += s[l : m.start(0)]
-		ret += m.group(1) + phl_exp_beg.format(phl) + '\n'
-		ret += placeholders[phl]
-		ret += '\n' + m.group(1) + phl_exp_end.format(phl)
+		ret += m.group(1) + placeholder_expanded_beginning.format(phl) + '\n'
+		ret += builtin_lookup(phl) if not is_all and phl[0] == '@' else placeholders[phl]
+		ret += '\n' + m.group(1) + placeholder_expanded_ending.format(phl)
 		l = m.end(0)
 	ret += s[l:]
 	return ret
 
-def ungen(s, phl):
+def ungen(s : str, phl : str) -> str:
 	ret = ''
 	l = 0
 	is_all = (phl == '@all')
-	for m in re_phl_exp_beg.finditer(s):
+	for m in re_placeholder_expanded_beginning.finditer(s):
 		if((not is_all) and m.group(2) != phl):
 			continue
 		ret += s[l : m.start(0)]
-		ret += m.group(1) + phl_col.format(phl)
+		ret += m.group(1) + placeholder_collapsed.format(phl)
 		l = m.end(0)
-		for me in re_phl_exp_end.finditer(s[m.end(0):]):
+		for me in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
 			if(me.group(1) != phl):
 				continue
 			l = m.end(0) + me.end(0)
@@ -84,15 +110,15 @@ def ungen(s, phl):
 	ret += s[l:]
 	return ret
 
-def get_param(argv, i, opt):
+def get_param(argv : [str], i : int) -> str:
 	try:
 		param = argv[i]
 	except:
-		print('Missing parameter to flag \'{0}\'.'.format(opt))
+		print('Missing parameter to flag \'{0}\'.'.format(argv[i-1]))
 		exit(2)
 	return param
 
-def plug(argv):
+def plug(argv : [str]) -> int:
 	sfiles = []
 	i = -1
 	while i < len(argv)-1:
@@ -119,7 +145,7 @@ def plug(argv):
 			for sf in sfiles:
 				try:
 					with open(sf, 'r') as f:
-						s = ungen(f.read(), get_param(argv, i, '-u'))
+						s = ungen(f.read(), get_param(argv, i))
 					with open(sf, 'w') as f:
 						f.write(s)
 				except:
@@ -129,13 +155,13 @@ def plug(argv):
 		if argv[i-1] == '-g':
 			for sf in sfiles:
 				with open(sf, 'r') as f:
-					s = gen(f.read(), get_param(argv, i, '-g'))
+					s = gen(f.read(), get_param(argv, i))
 				with open(sf, 'w') as f:
 					f.write(s)
 			continue
 		
 		if argv[i-1] == '-f':
-			sfiles.append(get_param(argv, i, '-f'))
+			sfiles.append(get_param(argv, i))
 			continue
 
 		print("Unrecognized flag '{0}'.".format(argv[i-1]))
