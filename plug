@@ -5,97 +5,85 @@ import sys
 import re
 from enum import Enum, auto
 
-BLUE    = ''
-YELLOW  = ''
-GREEN   = ''
-RED     = ''
-BOLD    = ''
-NORMAL  = ''
-MAGENTA = ''
-REVERSE = ''
+C = {} # ANSI colors
 
 def has_color():
-	import os
-	return "color" in os.environ.get('TERM')
+    import os
+    return "color" in os.environ.get('TERM')
 
 def def_colors():
-	global BLUE, YELLOW, GREEN, RED, BOLD, NORMAL, MAGENTA, REVERSE
-	BLUE    = '\033[34m'
-	YELLOW  = '\033[33m'
-	GREEN   = '\033[32m'
-	RED     = '\033[31m'
-	BOLD    = '\033[1m'
-	NORMAL  = '\033[0m'
-	MAGENTA = '\033[35m'
-	REVERSE = '\033[7m'
+    global C
+    C = {
+        'b': '\033[34m',
+        'y': '\033[33m',
+        'g': '\033[32m',
+        'r': '\033[31m',
+        'm': '\033[35m',
+        'B': '\033[1m',
+        'R': '\033[7m',
+        'n': '\033[0m',
+    }
 
 def undef_colors():
-	global BLUE, YELLOW, GREEN, RED, BOLD, NORMAL, MAGENTA, REVERSE
-	BLUE    = ''
-	YELLOW  = ''
-	GREEN   = ''
-	RED     = ''
-	BOLD    = ''
-	NORMAL  = ''
-	MAGENTA = ''
-	REVERSE = ''
+    global C
+    C = {
+        'b': '',
+        'y': '',
+        'g': '',
+        'r': '',
+        'B': '',
+        'n': '',
+        'R': '',
+        'm': '',
+    }
+undef_colors()
 
 class Error(Enum):
-	PARAM_MISS = auto()
-	UNK_FLAG   = auto()
-	IO         = auto()
-	UNK_OPT    = auto()
-	UNTERM_DEF = auto()
+    PARAM_MISS = auto()
+    UNK_FLAG   = auto()
+    IO         = auto()
+    UNK_OPT    = auto()
+    UNTERM_DEF = auto()
+    NO_FILES   = auto()
+    MULTI_OP   = auto()
+    NO_OP      = auto()
 
 def usage():
-	print(
-'''{GREEN}{BOLD}{argv0}{NORMAL} {BOLD}{YELLOW}({BLUE}<option>{YELLOW}|{BLUE}<file>{YELLOW})+{NORMAL}
-  {YELLOW}Position insensitive options:{NORMAL}
-	{GREEN}{BOLD}-h{NORMAL} {BLUE}{BOLD}{NORMAL}                       : print help and exit
-	{GREEN}{BOLD}--color{NORMAL} {BOLD}{BLUE}never{YELLOW}|{BLUE}auto{YELLOW}|{BLUE}always{NORMAL} : set output coloring option; default: auto
-  {YELLOW}Position sensitive options:{NORMAL}
-	{GREEN}{BOLD}-d{NORMAL} {BLUE}{BOLD}<name> <value>{NORMAL}         : define placeholder
-	{GREEN}{BOLD}-e{NORMAL} {BLUE}{BOLD}<name> <file>{NORMAL}          : define placeholder as the contents of <file>
-	{GREEN}{BOLD}-u{NORMAL} {BLUE}{BOLD}<placeholder>{NORMAL}          : ungenerate placeholder (ie. collapse)
-	{GREEN}{BOLD}-g{NORMAL} {BLUE}{BOLD}<placeholder>{NORMAL}          : generate placeholder (ie. expand)
+    print(
+'''{C[g]}{C[B]}{argv0}{C[n]} {C[B]}{C[y]}({C[b]}-g{C[y]}|{C[b]}-u{C[y]}) {C[B]}{C[y]}({C[b]}<option>{C[y]}|{C[b]}<file>{C[y]})+{C[n]}
+  {C[y]}Options:{C[n]}
+    {C[g]}{C[B]}-h{C[n]} {C[b]}{C[B]}{C[n]}                       : print help and exit
+    {C[g]}{C[B]}--color{C[n]} {C[B]}{C[b]}never{C[y]}|{C[b]}auto{C[y]}|{C[b]}always{C[n]} : set output coloring option; default: auto
+    {C[g]}{C[B]}-d{C[n]} {C[b]}{C[B]}<name> <value>{C[n]}         : define placeholder on the cli
+    {C[g]}{C[B]}-e{C[n]} {C[b]}{C[B]}<name> <file>{C[n]}          : define placeholder as the contents of <file>
+    {C[g]}{C[B]}-u{C[n]}                        : ungenerate placeholders (ie. collapse)
+    {C[g]}{C[B]}-g{C[n]}                        : generate placeholders (ie. expand)
   Every argument not starting with '-' is considered a file.
-  Options are evaluated in the order they are found and can be repeated.
   If multiple files are specified, actions apply to all of them.
-  {MAGENTA}{REVERSE}NOTE:{NORMAL} do not forget to specify your file before the desired actions.
+  Undefine placeholders are left intact.
 
-  {YELLOW}{BOLD}Placeholder syntax:{NORMAL}
-	#placeholder<<name>> COLLAPSED
-	{MAGENTA}{REVERSE}NOTE:{NORMAL} text located before the placeholder on the same line is preserved,
-	 allowing for commenting it out
-	{YELLOW}Builtins:{NORMAL}
-	  Builtin placeholder names must start with '@', these names are reserved.
-	  Every Plug implementation is free to define it's own builtins.
-	  This Plug implementation defines the following builtins:
-		{BLUE}@all{NORMAL}
-		{BLUE}@gnu-tofile-*{NORMAL}
+  {C[y]}{C[B]}Placeholder syntax:{C[n]}
+    {C[y]}#placeholder<{C[n]}<name>{C[y]}> COLLAPSED{C[n]}
+    {C[m]}{C[R]}NOTE:{C[n]} text located on the same line and before the placeholder is preserved.
+     This allows you to comment it out while embedding.
+    {C[y]}Builtins:{C[n]}
+      Builtin placeholder names start with '@', these names are reserved.
+      This Plug version defines the following builtins:
+        {C[b]}@gnu-tofile-*{C[n]}
 
-  {YELLOW}{BOLD}Example:{NORMAL}
-	{GREEN}$ cat ex1.txt{NORMAL}
-	original text
-	#placeholder<hw> COLLAPSED
-	some more original text
-	{GREEN}$ plug -f ex1.txt -d hw 'hello world' -g hw{NORMAL}
-	{GREEN}$ cat ex1.txt{NORMAL}
-	original text
-	#placeholder<hw> BEGIN
-	hello world
-	#placeholder<hw> END
-	some more original text
+  {C[y]}{C[B]}Example:{C[n]}
+    // XXX REDO THIS WHOLE SECTION
 '''.format(**globals(), argv0 = sys.argv[0]), end='')
 
-
+destination_files = []
+operation = ""
 
 placeholders = {}
 
 placeholder = '#placeholder<{0}>'
 placeholder_collapsed  = placeholder + ' COLLAPSED'
 placeholder_expanded_beginning = placeholder + ' BEGIN'
-placeholder_expanded_ending	= placeholder + ' END'
+placeholder_expanded_ending = placeholder + ' END'
 del placeholder
 
 re_placeholder_collapsed          = re.compile('''^(.*){0}.*'''.format(placeholder_collapsed.format('''([a-zA-Z0-9_@-]+)''')), re.M)
@@ -104,7 +92,7 @@ re_placeholder_expanded_ending    = re.compile('''^.*{0}.*'''.format(placeholder
 
 
 builtins = [
-	('''@gnu-tofile-(.*)''',
+('''@gnu-tofile-(.*)''',
 '''payload_data=$(sed -n '/#placeholder<payload> START$/,/#placeholder<payload> END$/p' "$(realpath $0)")
 payload_data=$(echo "$payload_data" | grep -vE '#placeholder<payload> (START|END)')
 [ -z "$PAYLOADOUT" ] && PAYLOADOUT="out"
@@ -113,144 +101,139 @@ echo "$payload_data" > "$PAYLOADOUT"'''
 ]
 
 def builtin_lookup(phl : str) -> str:
-	for i in builtins:
-		regex, value = i
-		m = re.compile(regex).match(phl)
-		if m:
-			value = value.format(m.groups()[1:])
-			return value
-	return ''
+    for i in builtins:
+        regex, value = i
+        m = re.compile(regex).match(phl)
+        if m:
+            value = value.format(m.groups()[1:])
+            return value
+    return ''
 
-def gen(s : str, phl : str) -> str:
-	ret = ''
-	l = 0
-	is_all = (phl == '@all')
+def gen(s : str, phls : [str]) -> str:
+    for phl in phls:
+        buf = ''
+        l = 0
+        for m in re_placeholder_collapsed.finditer(s):
+            if (m.group(2) != phl): continue
+            buf += s[l : m.start(0)]
+            buf += m.group(1) + placeholder_expanded_beginning.format(phl) + '\n'
+            buf += builtin_lookup(phl) if phl[0] == '@' else placeholders[phl]
+            buf += '\n' + m.group(1) + placeholder_expanded_ending.format(phl)
+            l = m.end(0)
+        buf += s[l:]
+        s = buf
 
-	for m in re_placeholder_collapsed.finditer(s):
-		if (not is_all) and (m.group(2) != phl):
-			continue
-		ret += s[l : m.start(0)]
-		ret += m.group(1) + placeholder_expanded_beginning.format(phl) + '\n'
-		ret += builtin_lookup(phl) if not is_all and phl[0] == '@' else placeholders[phl]
-		ret += '\n' + m.group(1) + placeholder_expanded_ending.format(phl)
-		l = m.end(0)
-	ret += s[l:]
-	return ret
+    return s
 
-def ungen(s : str, phl : str) -> str:
-	ret = ''
-	l = 0
-	is_all = (phl == '@all')
-	for m in re_placeholder_expanded_beginning.finditer(s):
-		if((not is_all) and m.group(2) != phl):
-			continue
-		ret += s[l : m.start(0)]
-		ret += m.group(1) + placeholder_collapsed.format(phl)
-		l = m.end(0)
-		for me in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
-			if(me.group(1) != phl):
-				continue
-			l = m.end(0) + me.end(0)
-			break
-	ret += s[l:]
-	return ret
-
-def get_param(argv : [str], i : int) -> str:
-	try:
-		param = argv[i]
-	except:
-		error_and_quit(Error.PARAM_MISS, [argv[i-1]])
-	return param
+def ungen(s : str, phls : [str]) -> str:
+    for phl in phls:
+        buf = ''
+        l = 0
+        for m in re_placeholder_expanded_beginning.finditer(s):
+            if(m.group(2) != phl): continue
+            buf += s[l : m.start(0)]
+            buf += m.group(1) + placeholder_collapsed.format(phl)
+            l = m.end(0)
+            for me in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
+                if(me.group(1) != phl): continue
+                l = m.end(0) + me.end(0)
+                break
+        buf += s[l:]
+        s = buf
+    return s
 
 def error_and_quit(e : int, argv : [str]) -> None:
-	msg = {
-		Error.PARAM_MISS : "Missing parameter to flag '{0}'.",
-		Error.UNK_FLAG   : "Unrecognized flag '{0}'.",
-		Error.UNK_OPT    : "Unknown option passed to {0}: '{1}'.",
-		Error.IO         : "I/O error encountered while interacting with '{0}'.",
-		Error.UNTERM_DEF : "Unterminated definition ({0}).",
-	}
-	print("{RED}".format(**globals()), end='')
-	print(msg[e].format(*argv, **globals()), end='')
-	print("{NORMAL}".format(**globals()))
-	exit(e.value)
+    message = {
+        Error.PARAM_MISS : "Missing parameter to flag '{0}'.",
+        Error.UNK_FLAG   : "Unrecognized flag '{0}'.",
+        Error.UNK_OPT    : "Unknown option passed to {0}: '{1}'.",
+        Error.IO         : "I/O error encountered while interacting with '{0}'.",
+        Error.UNTERM_DEF : "Unterminated definition ({0}).",
+        Error.NO_FILES   : "Flags were specified, but no files.",
+        Error.MULTI_OP   : "Multiple operations specified, '-g'/'-u' are mutually exclive.",
+        Error.NO_OP      : "No operation operation specified. Either '-g' or '-u' is required.",
+    }
+    formatted_message = message[e].format(*argv, **globals())
+    print("{C[r]}{msg}{C[n]}".format(**globals(), msg=formatted_message))
+    exit(e.value)
+
+# We need this function because getopt does not support a single flag taking 2 arguments
+def parse_args(argv : [str]) -> None:
+    global destination_files, operation
+    def get_param(argv : [str], i : int) -> str:
+        try: param = argv[i]
+        except: error_and_quit(Error.PARAM_MISS, [argv[i-1]])
+        return param
+
+    for arg in argv:
+        if arg == '-h' or arg == '--help':
+            usage()
+            exit(0)
+
+    try:
+        i = 0
+        while i < len(argv):
+            # 0 parama opt
+            if argv[i] == '-u' or argv[i] == '-g':
+                if operation != '': error_and_quit(Error.MULTI_OP, [])
+                operation = argv[i][1]
+                i = i + 1
+                continue
+
+            # 1 param opt
+            if argv[i-1] == '--color':
+                p = get_param(argv, i)
+                if p == 'always': def_colors()
+                elif p == 'auto' and has_color: def_colors()
+                elif p == 'never': undef_colors()
+                else: error_and_quit(Error.UNK_OPT, ['--color', p])
+                i = i + 2
+                continue
+
+            # 2 param opt
+            if argv[i] == '-d':
+                placeholders[argv[i+1]] = argv[i+2]
+                i = i + 3
+                continue
+
+            if argv[i] == '-e':
+                with open(argv[i+2], "r") as f: placeholders[argv[i+1]] = f.read()
+                i = i + 3
+                continue
+
+            # catch all
+            if argv[i][0] != '-': # file
+                destination_files.append(argv[i])
+                i = i + 1
+                continue
+
+            error_and_quit(Error.UNK_FLAG, [argv[i]])
+    except IndexError: error_and_quit(Error.PARAM_MISS, [argv[i]])
+    except FileNotFoundError as e: error_and_quit(Error.IO, [e.filename])
 
 def plug(argv : [str]) -> int:
-	if has_color:
-		def_colors()
+    global destination_files, operation
+    if has_color: def_colors()
 
-	sfiles = []
+    if len(argv) < 2:
+        usage()
+        exit(1)
 
-	i = -1
-	while i < len(argv)-1:
-		if argv[i] == '-h' or argv[i] == '--help':
-			usage()
-			exit(0)
-		i = i + 1
-		if argv[i-1] == '--color':
-			p = get_param(argv, i)
-			if p == 'always':
-				def_colors()
-			elif p == 'auto':
-				if has_color:
-					def_colors()
-			elif p == 'never':
-				undef_colors()
-			else:
-				error_and_quit(Error.UNK_OPT, ['--color', p])
-			continue
+    parse_args(argv)
 
-	i = -1
-	while i < len(argv)-1:
-		i = i + 1
+    if destination_files == []:
+        error_and_quit(Error.NO_FILES, [])
 
-		# 2 param opt
-		if argv[i] == '-d':
-			try:
-				placeholders[argv[i+1]] = argv[i+2]
-				i = i + 2
-			except:
-				error_and_quit(Error.UNTERM_DEF, ['-d'])
-			continue
+    if operation == '': error_and_quit(Error.NO_OP, [argv[i-1]])
+    elif operation == 'g': gen_callback = gen
+    elif operation == 'u': gen_callback = ungen
 
-		if argv[i] == '-e':
-			try:
-				with open(argv[i+2], 'r') as f:
-					placeholders[argv[i+1]] = f.read()
-				i = i + 2
-			except:
-				error_and_quit(Error.UNTERM_DEF, ['-e'])
-			continue
-
-		# 1 param opt
-		i = i + 1
-
-		if argv[i-1] == '-u':
-			for sf in sfiles:
-				try:
-					with open(sf, 'r') as f:
-						s = ungen(f.read(), get_param(argv, i))
-					with open(sf, 'w') as f:
-						f.write(s)
-				except:
-					error_and_quit(Error.IO, [sf])
-			continue
-
-		if argv[i-1] == '-g':
-			for sf in sfiles:
-				with open(sf, 'r') as f:
-					s = gen(f.read(), get_param(argv, i))
-				with open(sf, 'w') as f:
-					f.write(s)
-			continue
-		
-		if argv[i-1][0] != '-':
-			sfiles.append(get_param(argv, i))
-			continue
-
-		error_and_quit(Error.UNK_FLAG, [argv[i-1]])
-	return 0
-	
+    for df in destination_files:
+        try:
+            with open(df, 'r') as f: s = gen_callback(f.read(), placeholders)
+            with open(df, 'w') as f: f.write(s)
+        except FileNotFoundError: error_and_quit(Error.IO, df)
+    return 0
 
 if __name__ == '__main__':
-	raise SystemExit(plug(sys.argv[1:]))
+    raise SystemExit(plug(sys.argv[1:]))
