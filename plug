@@ -72,7 +72,17 @@ def usage():
         {C[b]}@gnu-tofile-*{C[n]}
 
   {C[y]}{C[B]}Example:{C[n]}
-    // XXX REDO THIS WHOLE SECTION
+    {C[g]}$ cat example/ex1.txt{C[n]}
+    original text
+    #placeholder<hw> COLLAPSED
+    some more original text
+    {C[g]}$ plug -g -d hw 'hello world' example/ex1.txt{C[n]}
+    {C[g]}$ cat example/ex1.txt{C[n]}
+    original text
+    #placeholder<hw> BEGIN
+    hello world
+    #placeholder<hw> END
+    some more original text
 '''.format(**globals(), argv0 = sys.argv[0]), end='')
 
 destination_files = []
