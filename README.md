@@ -1,10 +1,8 @@
 # Plug
 
-> PLUG - PlacehoLder Un- and Generator; for in place metaprogramming or easy payload embedding
+> PLUG - PlacehoLder Un- and Generator; for in-place metaprogramming or easy payload embedding
 
 A complementary tool for traditional preprocessors to avoid adding a redundant step of translation to every update.
-
-### In practice
 
 ### Why?
 Multiple reasons actually:
@@ -30,9 +28,11 @@ say one of the tools involved need large amounts of binary data.
 
 Imagine an installer for example that must unpack a tar.
 
-Before you wonder if I had made this twisted hack up, I can prove the contrary:
+Before you wonder whether I have made this twisted hack up, I can prove the contrary:
 
-https://www.xmodulo.com/embed-binary-file-bash-script.html
+[https://www.xmodulo.com/embed-binary-file-bash-script.html](https://www.xmodulo.com/embed-binary-file-bash-script.html)
+
+### In practice
 
 ### TODO
 + fill in "in practice"
