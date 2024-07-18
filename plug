@@ -234,7 +234,7 @@ def plug(argv : [str]) -> int:
     if destination_files == []:
         error_and_quit(Error.NO_FILES, [])
 
-    if operation == '': error_and_quit(Error.NO_OP, [argv[i-1]])
+    if operation == '': error_and_quit(Error.NO_OP, [])
     elif operation == 'g': gen_callback = gen
     elif operation == 'u': gen_callback = ungen
 
