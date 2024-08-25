@@ -56,6 +56,7 @@ def usage():
     {C[g]}{C[B]}--color{C[n]} {C[B]}{C[b]}never{C[y]}|{C[b]}auto{C[y]}|{C[b]}always{C[n]} : set output coloring option; default: auto
     {C[g]}{C[B]}-d{C[n]} {C[b]}{C[B]}<name> <value>{C[n]}         : define placeholder on the cli
     {C[g]}{C[B]}-e{C[n]} {C[b]}{C[B]}<name> <file>{C[n]}          : define placeholder as the contents of <file>
+    {C[g]}{C[B]}-a{C[n]}                        : define all undefined placeholders as empty strings
     {C[g]}{C[B]}-u{C[n]}                        : ungenerate placeholders (ie. collapse)
     {C[g]}{C[B]}-g{C[n]}                        : generate placeholders (ie. expand)
   Every argument not starting with '-' is considered a file.
@@ -87,6 +88,7 @@ def usage():
 
 destination_files = []
 operation = ""
+is_all    = False
 
 placeholders = {}
 
@@ -120,6 +122,8 @@ def builtin_lookup(phl : str) -> str:
     return ''
 
 def gen(s : str, phls : [str]) -> str:
+    global is_all
+    s = ungen(s, phls)
     for phl in phls:
         buf = ''
         l = 0
@@ -132,10 +136,20 @@ def gen(s : str, phls : [str]) -> str:
             l = m.end(0)
         buf += s[l:]
         s = buf
-
+    if is_all:
+        buf = ''
+        l = 0
+        for m in re_placeholder_collapsed.finditer(s):
+            buf += s[l : m.start(0)]
+            buf += m.group(1) + placeholder_expanded_beginning.format(m.group(2)) + '\n'
+            buf += m.group(1) + placeholder_expanded_ending.format(m.group(2))
+            l = m.end(0)
+        buf += s[l:]
+        s = buf
     return s
 
 def ungen(s : str, phls : [str]) -> str:
+    global is_all
     for phl in phls:
         buf = ''
         l = 0
@@ -146,6 +160,19 @@ def ungen(s : str, phls : [str]) -> str:
             l = m.end(0)
             for me in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
                 if(me.group(1) != phl): continue
+                l = m.end(0) + me.end(0)
+                break
+        buf += s[l:]
+        s = buf
+    if is_all:
+        buf = ''
+        l = 0
+        for m in re_placeholder_expanded_beginning.finditer(s):
+            buf += s[l : m.start(0)]
+            buf += m.group(1) + placeholder_collapsed.format(m.group(2))
+            l = m.end(0)
+            for me in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
+                if(me.group(1) != m.group(2)): continue
                 l = m.end(0) + me.end(0)
                 break
         buf += s[l:]
@@ -169,7 +196,7 @@ def error_and_quit(e : int, argv : [str]) -> None:
 
 # We need this function because getopt does not support a single flag taking 2 arguments
 def parse_args(argv : [str]) -> None:
-    global destination_files, operation
+    global destination_files, operation, is_all
     def get_param(argv : [str], i : int) -> str:
         try: param = argv[i]
         except: error_and_quit(Error.PARAM_MISS, [argv[i-1]])
@@ -187,6 +214,11 @@ def parse_args(argv : [str]) -> None:
             if argv[i] == '-u' or argv[i] == '-g':
                 if operation != '': error_and_quit(Error.MULTI_OP, [])
                 operation = argv[i][1]
+                i = i + 1
+                continue
+
+            if argv[i] == '-a':
+                is_all = True
                 i = i + 1
                 continue
 
