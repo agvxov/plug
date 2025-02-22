@@ -225,7 +225,7 @@ def parse_args(argv : [str]) -> None:
             if argv[i-1] == '--color':
                 p = get_param(argv, i)
                 if p == 'always': def_colors()
-                elif p == 'auto' and has_color: def_colors()
+                elif p == 'auto' and has_color(): def_colors()
                 elif p == 'never': undef_colors()
                 else: error_and_quit(Error.UNK_OPT, ['--color', p])
                 i = i + 2
@@ -254,7 +254,7 @@ def parse_args(argv : [str]) -> None:
 
 def plug(argv : [str]) -> int:
     global destination_files, operation
-    if has_color: def_colors()
+    if has_color(): def_colors()
 
     if len(argv) < 2:
         usage()
