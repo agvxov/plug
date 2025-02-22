@@ -9,7 +9,7 @@ C = {} # ANSI colors
 
 def has_color():
     import os
-    return "color" in os.environ.get('TERM')
+    return 'color' in os.getenv('TERM', '') and not (os.getenv('NOCOLOR', '') != '')
 
 def def_colors():
     global C
