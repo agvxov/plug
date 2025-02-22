@@ -92,15 +92,16 @@ is_all    = False
 
 placeholders = {}
 
-placeholder = '#placeholder<{0}>'
-placeholder_collapsed  = placeholder + ' COLLAPSED'
+placeholder_name               = '''([a-zA-Z0-9_@-]+)'''
+placeholder                    = '#placeholder<{0}>'.format(placeholder_name)
+placeholder_collapsed          = placeholder + ' COLLAPSED'
 placeholder_expanded_beginning = placeholder + ' BEGIN'
-placeholder_expanded_ending = placeholder + ' END'
+placeholder_expanded_ending    = placeholder + ' END'
 del placeholder
 
-re_placeholder_collapsed          = re.compile('''^(.*){0}.*'''.format(placeholder_collapsed.format('''([a-zA-Z0-9_@-]+)''')), re.M)
-re_placeholder_expanded_beginning = re.compile('''^(.*){0}.*'''.format(placeholder_expanded_beginning.format('''([a-zA-Z0-9_@-]+)''')), re.M)
-re_placeholder_expanded_ending    = re.compile('''^.*{0}.*'''.format(placeholder_expanded_ending.format('''([a-zA-Z0-9_@-]+)''')), re.M)
+re_placeholder_collapsed          = re.compile('''^(.*){0}.*'''.format(placeholder_collapsed), re.M)
+re_placeholder_expanded_beginning = re.compile('''^(.*){0}.*'''.format(placeholder_expanded_beginning), re.M)
+re_placeholder_expanded_ending    = re.compile('''^.*{0}.*'''.format(placeholder_expanded_ending), re.M)
 
 
 builtins = [
@@ -113,8 +114,7 @@ echo "$payload_data" > "$PAYLOADOUT"'''
 ]
 
 def builtin_lookup(phl : str) -> str:
-    for i in builtins:
-        regex, value = i
+    for regex, value in builtins:
         m = re.compile(regex).match(phl)
         if m:
             value = value.format(m.groups()[1:])
@@ -180,17 +180,17 @@ def ungen(s : str, phls : [str]) -> str:
     return s
 
 def error_and_quit(e : int, argv : [str]) -> None:
-    message = {
+    messages = {
         Error.PARAM_MISS : "Missing parameter to flag '{0}'.",
         Error.UNK_FLAG   : "Unrecognized flag '{0}'.",
         Error.UNK_OPT    : "Unknown option passed to {0}: '{1}'.",
         Error.IO         : "I/O error encountered while interacting with '{0}'.",
         Error.UNTERM_DEF : "Unterminated definition ({0}).",
-        Error.NO_FILES   : "Flags were specified, but no files.",
+        Error.NO_FILES   : "Flags were specified, but no files given.",
         Error.MULTI_OP   : "Multiple operations specified, '-g'/'-u' are mutually exclive.",
         Error.NO_OP      : "No operation operation specified. Either '-g' or '-u' is required.",
     }
-    formatted_message = message[e].format(*argv, **globals())
+    formatted_message = messages[e].format(*argv)
     print("{C[r]}{msg}{C[n]}".format(**globals(), msg=formatted_message))
     exit(e.value)
 
@@ -202,10 +202,9 @@ def parse_args(argv : [str]) -> None:
         except: error_and_quit(Error.PARAM_MISS, [argv[i-1]])
         return param
 
-    for arg in argv:
-        if arg == '-h' or arg == '--help':
-            usage()
-            exit(0)
+    if '-h' in argv or '--help' in argv:
+        usage()
+        exit(0)
 
     try:
         i = 0
