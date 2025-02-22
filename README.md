@@ -37,3 +37,4 @@ Before you wonder whether I have made this twisted hack up, I can prove the cont
 ### TODO
 + fill in "in practice"
 + @all is broken, it ruins everything and not internally defined as a builtin
++ add "force" option that appens a placeholder to the end of the file
