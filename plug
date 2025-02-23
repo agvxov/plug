@@ -131,12 +131,12 @@ def ungen(s : str, phls : [str]) -> str:
         buf = ''
         l = 0
         for m in re_placeholder_expanded_beginning.finditer(s):
-            if(m.group(2) != phl): continue
+            if m.group(2) != phl: continue
             buf += s[l : m.start(0)]
             buf += m.group(1) + placeholder_collapsed.format(phl)
             l = m.end(0)
             for me in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
-                if(me.group(1) != phl): continue
+                if me.group(1) != phl: continue
                 l = m.end(0) + me.end(0)
                 break
         buf += s[l:]
@@ -149,7 +149,7 @@ def ungen(s : str, phls : [str]) -> str:
             buf += m.group(1) + placeholder_collapsed.format(m.group(2))
             l = m.end(0)
             for me in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
-                if(me.group(1) != m.group(2)): continue
+                if me.group(1) != m.group(2): continue
                 l = m.end(0) + me.end(0)
                 break
         buf += s[l:]
@@ -163,7 +163,7 @@ def gen(s : str, phls : [str]) -> str:
         buf = ''
         l = 0
         for m in re_placeholder_collapsed.finditer(s):
-            if (m.group(2) != phl): continue
+            if m.group(2) != phl: continue
             buf += s[l : m.start(0)]
             buf += m.group(1) + placeholder_expanded_beginning.format(phl) + '\n'
             buf += builtin_lookup(phl) if phl[0] == '@' else placeholders[phl]
@@ -199,12 +199,17 @@ def error_and_quit(e : int, argv : [str]) -> None:
     exit(e.value)
 
 # We need this function because getopt does not support a single flag taking 2 arguments
+# NOTE: argv0 is expected to be cut off
 def parse_args(argv : [str]) -> None:
     global destination_files, operation, is_all
     def get_param(argv : [str], i : int) -> str:
         try: param = argv[i]
         except: error_and_quit(Error.PARAM_MISS, [argv[i-1]])
         return param
+
+    if len(argv) < 1:
+        usage()
+        exit(1)
 
     if '-h' in argv or '--help' in argv:
         usage()
@@ -259,10 +264,6 @@ def parse_args(argv : [str]) -> None:
 def plug(argv : [str]) -> int:
     global destination_files, operation
     if has_color(): def_colors()
-
-    if len(argv) < 2:
-        usage()
-        exit(1)
 
     parse_args(argv)
 
