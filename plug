@@ -187,7 +187,7 @@ def error_and_quit(e : int, argv : [str]) -> None:
         Error.IO         : "I/O error encountered while interacting with '{0}'.",
         Error.UNTERM_DEF : "Unterminated definition ({0}).",
         Error.NO_FILES   : "Flags were specified, but no files given.",
-        Error.MULTI_OP   : "Multiple operations specified, '-g'/'-u' are mutually exclive.",
+        Error.MULTI_OP   : "Multiple operations specified, '-g'/'-u' are mutually exclusive.",
         Error.NO_OP      : "No operation operation specified. Either '-g' or '-u' is required.",
     }
     formatted_message = messages[e].format(*argv)
