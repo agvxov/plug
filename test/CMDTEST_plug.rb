@@ -33,7 +33,7 @@ class CMDTEST_plug < Cmdtest::Testcase
     expected = [
       "original text",
       "#placeholder<hw> BEGIN",
-      "hw",
+      "hello world",
       "#placeholder<hw> END",
       "some more original text",
     ]
