@@ -1,0 +1,4 @@
+[_] everything is horribly broken
+[_] the code is partially horrific
+[_] make sure recursive plugs are handled and documented
+[_] make the tests depend on the mirrored file contents
