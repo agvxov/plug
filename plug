@@ -135,9 +135,9 @@ def ungen(s : str, phls : [str]) -> str:
         buf += s[l : m.start(0)]
         buf += m.group(1) + placeholder_collapsed.format(placeholder_name)
         l = m.end(0)
-        for mend in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
+        for mend in re_placeholder_expanded_ending.finditer(s[l:]):
             if mend.group(1) != placeholder_name: continue
-            l = mend.end(0) + mend.end(0)
+            l += mend.end(0)
             break
     buf += s[l:]
     s = buf
