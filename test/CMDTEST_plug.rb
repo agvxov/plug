@@ -21,7 +21,7 @@ class CMDTEST_plug < Cmdtest::Testcase
       "some more original text",
     ]
 
-    cmd "plug test_expended.txt -u" do
+    cmd "plug test_expended.txt -a -u" do
       changed_files ["test_expended.txt"]
       file_equal "test_expended.txt", expected
       exit_zero
@@ -55,7 +55,7 @@ class CMDTEST_plug < Cmdtest::Testcase
       "}",
     ]
 
-    cmd "plug test2_expended.cpp -u" do
+    cmd "plug test2_expended.cpp -a -u" do
       changed_files ["test2_expended.cpp"]
       file_equal "test2_expended.cpp", expected
       exit_zero
@@ -67,12 +67,14 @@ class CMDTEST_plug < Cmdtest::Testcase
     expected = [
       "#include <stdio.h>",
       "signed main(void){",
-      "\t// #placeholder<code> COLLAPSED",
+      "\t// #placeholder<code> BEGIN",
+      "\tputs(\"hello world\");",
+      "\t// #placeholder<code> END",
       "\treturn 0;",
       "}",
     ]
 
-    cmd "plug test2_collapsed.cpp -d code '\tputs(\"hello world\")' -g" do
+    cmd "plug test2_collapsed.cpp -d code '\tputs(\"hello world\");' -g" do
       changed_files ["test2_collapsed.cpp"]
       file_equal "test2_collapsed.cpp", expected
       exit_zero

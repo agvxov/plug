@@ -136,36 +136,31 @@ def ungen(s : str, phls : [str]) -> str:
         buf += m.group(1) + placeholder_collapsed.format(placeholder_name)
         l = m.end(0)
         for mend in re_placeholder_expanded_ending.finditer(s[m.end(0):]):
-            if mend.group(1) != phl: continue
+            if mend.group(1) != placeholder_name: continue
             l = mend.end(0) + mend.end(0)
             break
+    buf += s[l:]
+    s = buf
     return s
 
 def gen(s : str, phls : [str]) -> str:
     global is_all
     s = ungen(s, phls)
-    for phl in phls:
-        buf = ''
-        l = 0
-        for m in re_placeholder_collapsed.finditer(s):
-            if m.group(2) != phl: continue
-            buf += s[l : m.start(0)]
-            buf += m.group(1) + placeholder_expanded_beginning.format(phl) + '\n'
-            buf += builtin_lookup(phl) if phl[0] == '@' else placeholders[phl]
-            buf += '\n' + m.group(1) + placeholder_expanded_ending.format(phl)
-            l = m.end(0)
-        buf += s[l:]
-        s = buf
-    if is_all:
-        buf = ''
-        l = 0
-        for m in re_placeholder_collapsed.finditer(s):
-            buf += s[l : m.start(0)]
-            buf += m.group(1) + placeholder_expanded_beginning.format(m.group(2)) + '\n'
-            buf += m.group(1) + placeholder_expanded_ending.format(m.group(2))
-            l = m.end(0)
-        buf += s[l:]
-        s = buf
+    buf = ''
+    l = 0
+    for m in re_placeholder_collapsed.finditer(s):
+        placeholder_name = m.group(2)
+        if not placeholder_name in phls and not is_all: continue
+        if placeholder_name[0] == '@': placeholder_value = builtin_lookup(placeholder_name)
+        elif placeholder_name in placeholders.keys(): placeholder_value = placeholders[placeholder_name]
+        elif is_all: placeholder_value = '\n'
+        buf += s[l : m.start(0)]
+        buf += m.group(1) + placeholder_expanded_beginning.format(placeholder_name) + '\n'
+        buf += placeholder_value + '\n'
+        buf += m.group(1) + placeholder_expanded_ending.format(placeholder_name)
+        l = m.end(0)
+    buf += s[l:]
+    s = buf
     return s
 
 def error_and_quit(e : int, argv : [str]) -> None:
