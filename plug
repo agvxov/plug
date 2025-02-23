@@ -5,6 +5,7 @@ import sys
 import re
 from enum import Enum, auto
 
+#pragma region color
 C = {} # ANSI colors
 
 def has_color():
@@ -37,17 +38,9 @@ def undef_colors():
         'm': '',
     }
 undef_colors()
+#pragma endregion
 
-class Error(Enum):
-    PARAM_MISS = auto()
-    UNK_FLAG   = auto()
-    IO         = auto()
-    UNK_OPT    = auto()
-    UNTERM_DEF = auto()
-    NO_FILES   = auto()
-    MULTI_OP   = auto()
-    NO_OP      = auto()
-
+#pragma region usage
 def usage():
     print(
 '''{C[g]}{C[B]}{argv0}{C[n]} {C[B]}{C[y]}({C[b]}-g{C[y]}|{C[b]}-u{C[y]}) {C[B]}{C[y]}({C[b]}<option>{C[y]}|{C[b]}<file>{C[y]})+{C[n]}
@@ -85,6 +78,17 @@ def usage():
     #placeholder<hw> END
     some more original text
 '''.format(**globals(), argv0 = sys.argv[0]), end='')
+#pragma endregion
+
+class Error(Enum):
+    PARAM_MISS = auto()
+    UNK_FLAG   = auto()
+    IO         = auto()
+    UNK_OPT    = auto()
+    UNTERM_DEF = auto()
+    NO_FILES   = auto()
+    MULTI_OP   = auto()
+    NO_OP      = auto()
 
 destination_files = []
 operation = ""
@@ -121,33 +125,6 @@ def builtin_lookup(phl : str) -> str:
             return value
     return ''
 
-def gen(s : str, phls : [str]) -> str:
-    global is_all
-    s = ungen(s, phls)
-    for phl in phls:
-        buf = ''
-        l = 0
-        for m in re_placeholder_collapsed.finditer(s):
-            if (m.group(2) != phl): continue
-            buf += s[l : m.start(0)]
-            buf += m.group(1) + placeholder_expanded_beginning.format(phl) + '\n'
-            buf += builtin_lookup(phl) if phl[0] == '@' else placeholders[phl]
-            buf += '\n' + m.group(1) + placeholder_expanded_ending.format(phl)
-            l = m.end(0)
-        buf += s[l:]
-        s = buf
-    if is_all:
-        buf = ''
-        l = 0
-        for m in re_placeholder_collapsed.finditer(s):
-            buf += s[l : m.start(0)]
-            buf += m.group(1) + placeholder_expanded_beginning.format(m.group(2)) + '\n'
-            buf += m.group(1) + placeholder_expanded_ending.format(m.group(2))
-            l = m.end(0)
-        buf += s[l:]
-        s = buf
-    return s
-
 def ungen(s : str, phls : [str]) -> str:
     global is_all
     for phl in phls:
@@ -175,6 +152,33 @@ def ungen(s : str, phls : [str]) -> str:
                 if(me.group(1) != m.group(2)): continue
                 l = m.end(0) + me.end(0)
                 break
+        buf += s[l:]
+        s = buf
+    return s
+
+def gen(s : str, phls : [str]) -> str:
+    global is_all
+    s = ungen(s, phls)
+    for phl in phls:
+        buf = ''
+        l = 0
+        for m in re_placeholder_collapsed.finditer(s):
+            if (m.group(2) != phl): continue
+            buf += s[l : m.start(0)]
+            buf += m.group(1) + placeholder_expanded_beginning.format(phl) + '\n'
+            buf += builtin_lookup(phl) if phl[0] == '@' else placeholders[phl]
+            buf += '\n' + m.group(1) + placeholder_expanded_ending.format(phl)
+            l = m.end(0)
+        buf += s[l:]
+        s = buf
+    if is_all:
+        buf = ''
+        l = 0
+        for m in re_placeholder_collapsed.finditer(s):
+            buf += s[l : m.start(0)]
+            buf += m.group(1) + placeholder_expanded_beginning.format(m.group(2)) + '\n'
+            buf += m.group(1) + placeholder_expanded_ending.format(m.group(2))
+            l = m.end(0)
         buf += s[l:]
         s = buf
     return s
