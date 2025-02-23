@@ -1,2 +1,4 @@
 venv/
 out
+.cmdtest-filter
+tmp-cmdtest-1/*

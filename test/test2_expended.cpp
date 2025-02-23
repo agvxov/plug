@@ -1,5 +1,5 @@
 #include <stdio.h>
-signed main(){
+signed main(void){
 	// #placeholder<code> BEGIN
 puts("hello world")
 	// #placeholder<code> END
