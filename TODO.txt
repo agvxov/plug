@@ -1,4 +1,3 @@
 [_] make sure recursive plugs are handled and documented
-[_] make the tests depend on the mirrored file contents
 [_] add in "in practice" paragraph to readme
 [_] add "force" option that appens a placeholder to the end of the file
